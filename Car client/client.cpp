@@ -13,11 +13,11 @@
 #define server_port 0000
 #define server_name "hello.com"
 
-int forward, right, backward, left;
+int X, Y;
 int analize(char[], int);
 void report(const char[]);
-int chartoint(char, char);
-void controls(int, int, int, int);
+int chartoint(char, char, char);
+void controls(int, int);
 int ser_start();
 void wire_start();
 void check(int, const char*);
@@ -102,10 +102,8 @@ int analize(char buf[], int socket) {
 			check(n, "Could not write to server! (CPI)");
 		}else
 		if (com[0] == 'E' && com[1] == 'D') {
-			forward = 10;
-			right = 10;
-			backward = 10;
-			left = 10;
+			X = 0;
+			y = 0;
 			close(socket);
 			return 1;
 		}
@@ -113,31 +111,24 @@ int analize(char buf[], int socket) {
 	// UDP server's job
 	else
 		if (loc == 'D') {
-			std::cout << "For now: " << std::endl << "F: " << forward << "R: " << right << "B: " << backward << "L: " << left;
-			if (strlen(buf) == 13) {
-				forward = chartoint(buf[2], buf[3]);
-				right = chartoint(buf[5], buf[6]);
-				backward = chartoint(buf[8], buf[9]);
-				left = chartoint(buf[11], buf[12]);
+			std::cout << "For now: " << std::endl << "X: " << X << "Y: " << Y;
+			if (strlen(buf) == 11) {
+				X = chartoint(buf[2], buf[3], buf[4], buf[5]);
+				Y = chartoint(buf[7], buf[8], buf[9], buf[10]);
 			}
 			else {
 				int pos;
-				for (int s = 0; s < (strlen (buf)-1) / 3; s++) {
-					pos = (s * 3) + 1;
-					std::cout << "Caught pos: " << buf[pos] << std::endl;
+				for (int s = 0; s < (strlen (buf)-1) / 5; s++) {
+					pos = (s * 5) + 1;
 					switch (buf[pos]) {
-					case 'F':
-						forward = chartoint(buf[pos + 1], buf[pos + 2]); break;
-					case 'R':
-						right = chartoint(buf[pos + 1], buf[pos + 2]); break;
-					case 'B':
-						backward = chartoint(buf[pos + 1], buf[pos + 2]); break;
-					case 'L':
-						left = chartoint(buf[pos + 1], buf[pos + 2]); break;
+					case 'X':
+						X = chartoint(buf[pos + 1], buf[pos + 2], buf[pos + 3], buf[pos + 4]); break;
+					case 'Y':
+						Y = chartoint(buf[pos + 1], buf[pos + 2], buf[pos + 3], buf[pos + 4]); break;
 					}
 				}
 			}
-			controls(forward, right, backward, left);
+			controls(X, Y);
 		}
 	// UDP server's job (END)
 	bzero(buf, 255);
@@ -151,68 +142,34 @@ int analize(char buf[], int socket) {
 #define int4 12
 #define ena 1
 #define enb 7
-void controls(int forward, int right, int backward, int left) {
-	forward = (forward - 10) * 20;
-	right = (right - 10) * 20;
-	backward = (backward - 10) * 20;
-	left = (left - 10) * 20;
-	std::cout << "F: " << forward << std::endl << "R: " << right << std::endl << "B: " << backward << std::endl << "L: " << left << std::endl;
-	if (forward != 0 && backward != 0) {
-		if (forward > backward) {
-			backward = 0;
-		}
-		else if (backward > forward) {
-			forward = 0;
-		}
-		else {
-			forward = 0;
-			backward = 0;
-		}
-	}
-	if (backward > 0) {
-		digitalWrite(int1, LOW);
-		digitalWrite(int2, HIGH);
-		pwmWrite(ena, backward);
-	}
-	if (forward > 0) {
-		digitalWrite(int1, HIGH);
-		digitalWrite(int2, LOW);
-		pwmWrite(ena, forward);
-	}
-	if (left != 0 && right != 0) {
-		if (left > right) {
-			right = 0;
-		}
-		else if (right > left) {
-			left = 0;
-		}
-		else {
-			left = 0;
-			right = 0;
-		}
-	}
-	if (left > 0) {
-		digitalWrite(int3, HIGH);
-		digitalWrite(int4, LOW);
-		pwmWrite(enb, left);
-	}
-	if (right > 0) {
+void controls(int X, int Y) {
+	std::cout << "X: " << X << std::endl << "Y: " << Y << std::endl;
+	if(X > 0){
 		digitalWrite(int3, LOW);
 		digitalWrite(int4, HIGH);
-		pwmWrite(enb, right);
 	}
-	if (left == 0) {
-		digitalWrite(int3, LOW);
-	}
-	if (right == 0) {
+	else if(X < 0){
+		digitalWrite(int3, HIGH);
 		digitalWrite(int4, LOW);
 	}
-	if (forward == 0) {
-		digitalWrite(int1, LOW);
+	else{
+		digitalWrite(int3, LOW);
+		digitalWrite(int4, LOW);
 	}
-	if (backward == 0) {
+	pwmWrite(enb, X);
+	if(Y > 0){
+		digitalWrite(int1, HIGH);
 		digitalWrite(int2, LOW);
 	}
+	else if(Y < 0){
+		digitalWrite(int1, LOW);
+		digitalWrite(int2, HIGH);
+	}
+	else{
+		digitalWrite(int1, LOW);
+		digitalWrite(int2, LOW);
+	}
+	pwmWrite(ena, Y);
 }
 
 void wire_start() {
@@ -223,15 +180,20 @@ void wire_start() {
 	pinMode(int4, OUTPUT);
 	pinMode(ena, PWM_OUTPUT);
 	pinMode(enb, PWM_OUTPUT);
-	forward = 10;
-	right = 10;
-	backward = 10;
-	left = 10;
+	X = 0;
+	Y = 0;
 }
 
-int chartoint(char num1, char num2) {
-	int ret = num2 - '0';
-	ret += (num1 - '0') * 10;
+int chartoint(char num1, char num2, char num3, char num4) {
+	int ret = 0;
+	if (num2 == '1') {
+		ret = 100;
+	}
+	int ret = num4 - '0';
+	ret += (num3 - '0') * 10;
+	if (num1 == '-') {
+		ret *= -1;
+	}
 	return ret;
 }
 
