@@ -2,7 +2,7 @@
 
 The project aims to connect a user on the internet with an RC car. 
 
-Configuration:
+Configuration: (For configuration please see raw file.)
 
 +------------------------------------------------------------------------------+
 |                                                                              |
