@@ -185,12 +185,11 @@ void wire_start() {
 }
 
 int chartoint(char num1, char num2, char num3, char num4) {
-	int ret = 0;
+	int ret = num4 - '0';
+	ret += (num3 - '0') * 10;
 	if (num2 == '1') {
 		ret = 100;
 	}
-	int ret = num4 - '0';
-	ret += (num3 - '0') * 10;
 	if (num1 == '-') {
 		ret *= -1;
 	}
