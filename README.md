@@ -1,4 +1,4 @@
-# Imoprtant Notics, not that anyone is going to see it
+# Important Notice, not that anyone is going to see it
 
 This project has not been maintained for quite a while and I wrote this code in my early years as a programmer.
 If you need an example of how to not write code, feel free to use this one. A more mature version of this project is
